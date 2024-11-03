@@ -1,5 +1,7 @@
 # The URL the site will be built for
 base_url = "https://the-mikedavis.github.io"
+title = "the-mikedavis"
+generate_feeds = true
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
@@ -7,10 +9,23 @@ compile_sass = true
 # Whether to build a search index to be used later on by a JavaScript library
 build_search_index = true
 
+theme = "apollo"
+taxonomies = [{ name = "tags" }]
+
 [markdown]
 # Whether to do syntax highlighting
 # Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
 highlight_code = true
 
 [extra]
-# Put all your custom variables here
+toc = true
+theme = "toggle"
+fancy_code = true
+menu = [
+  { name = "/about", url = "/", weight = 1 },
+  { name = "/posts", url = "/posts", weight = 2 }
+]
+socials = [
+  { name = "github", url = "https://github.com/the-mikedavis/", icon = "github" },
+]
+repo_url = "https://github.com/the-mikedavis/the-mikedavis.github.io/tree/main/content/"
