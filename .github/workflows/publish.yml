@@ -10,6 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Publish
-        uses: shalzz/zola-deploy-action@v0.19
+        uses: shalzz/zola-deploy-action@v0.19.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
