@@ -652,7 +652,7 @@ union Trailing {
 }
 ```
 
-Then `FlagSlice` is eligible for the [null pointer memory layout optimization](https://doc.rust-lang.org/std/option/index.html#representation). It's a really handy optimization that makes `size_of::<Option<T>>() == size_of::<T>()` - you don't pay for the option. But how would you represent the empty flag slice?
+Then `FlagSlice` is eligible for the [null pointer memory layout optimization](https://doc.rust-lang.org/std/option/index.html#representation). The compiler can tell that the zero bit pattern is not a valid representation for the struct and so it can try to fit other information in that representation, like whether an `Option<T>` is `Some` or `None`. It's a really handy optimization that makes `size_of::<Option<T>>() == size_of::<T>()` - you don't pay for the option. But how would you represent the empty flag slice?
 
 ```rust
 // 💣 UNDEFINED BEHAVIOR!!
