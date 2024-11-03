@@ -669,7 +669,7 @@ impl Default for FlagSlice {
 }
 ```
 
-The length is zero, the prefix is zeroes, the suffix is zeroes. The whole struct is zeroes! With this representation, `Option::<FlagSlice>::None` is exactly the same as `FlagSlice::default()`, causing your code to behave _weirdly_. Suddenly `Some(FlagSet::default()).is_some()` is `false`! 🥴
+The length is zero, the prefix is zeroes, the suffix is zeroes. The whole struct is zeroes! With this representation, `Option::<FlagSlice>::None` is exactly the same as `FlagSlice::default()`, causing your code to behave _weirdly_. Suddenly `Some(FlagSlice::default()).is_some()` is `false`! 🥴
 
 While this pitfall seems scary and hard to debug, [Miri](https://github.com/rust-lang/miri) has got your back. Write types without the `MaybeUninit<T>` wrapper and `cargo miri test` will helpfully point out that you're opening yourself up to undefined behavior.
 
