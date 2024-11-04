@@ -255,7 +255,7 @@ impl From<str> for UmbraString {
                 prefix[..len].copy_from_slice(source);
             } else {
                 prefix.copy_from_slice(&source[..PREFIX_LEN]);
-                suffix[..len - PREFIX_LEN].copy_from_slice(&source[PREFIX_LEN]);
+                suffix[..len - PREFIX_LEN].copy_from_slice(&source[PREFIX_LEN..]);
             }
 
             Trailing { suffix }
