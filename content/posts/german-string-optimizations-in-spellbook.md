@@ -279,7 +279,7 @@ For the long variant we'll use our `copy_slice` helper from above to allocate a 
 
 ## Reconstructing a byte slice
 
-Did you notice in our `copy_slice` helper function above that we copy the entire slice into a newly allocated array buffer instead of the part after the prefix: `&source[PREFIX_LEN..]`? You might think that we could save some space by only storing the remaining bytes after the prefix - and we could - but that would prevent us from recreating a `&[u8]` or `&str` from an `UmbraString`. Slices are **contiguous** memory chunks - array layouts in memory. We can't create a slice that starts in the `prefix` field and then continues by following a pointer. All of the data needs to be in one place.
+Did you notice in our `copy_slice` helper function above that we copy the entire slice into a newly allocated array buffer instead of the part after the prefix? We copied `source` instead of `&source[PREFIX_LEN..]`. You might think that we could save some space by only storing the remaining bytes after the prefix - and we could - but that would prevent us from recreating a `&[u8]` or `&str` from an `UmbraString`. Slices are **contiguous** memory chunks - array layouts in memory. We can't create a slice that starts in the `prefix` field and then continues by following a pointer. All of the data needs to be in one place.
 
 With that in mind, let's add a function to get our bytes back:
 
@@ -459,7 +459,7 @@ fn boxed_str_as_bytes(b: &mut Bencher) {
 }
 ```
 
-`umbra_str_as_bytes` measures at around 0.69 ns/iter on my machine while `boxed_str_as_bytes` measures around 0.46 ns/iter. We would need to be converting to bytes very very often to notice the difference, and Spellbook doesn't ultimately convert that often. The benchmarks for Spellbook's `check` function don't change perceptibly from the change.
+`umbra_str_as_bytes` measures at around 0.69 ns/iter on my machine while `boxed_str_as_bytes` measures around 0.46 ns/iter. We would need to be converting to bytes very very often to notice the difference, and Spellbook doesn't ultimately convert that often. The benchmarks for Spellbook's `check` function don't change perceptibly.
 
 Where we see the difference is in memory usage and heap interaction. Measuring heap allocations is not as straightforward in Rust as you might imagine if you're coming from garbage collected languages: garbage collectors need to track the heap to know when to clean up garbage so there's typically an interface to query heap information. Not so with Rust. [Measuring Memory Usage in Rust](https://rust-analyzer.github.io/blog/2020/12/04/measuring-memory-usage-in-rust.html) from the `rust-analyzer` blog points out a few options. Of them I'm partial to `valgrind`'s [DHAT](https://valgrind.org/docs/manual/dh-manual.html) tool since it's straightforward to use.
 
@@ -536,7 +536,7 @@ The new types comes with new challenges though. For... _reasons_... `Flag` is de
 type Flag = core::num::NonZeroU16;
 ```
 
-So rather than dealing with bytes we need to deal with `u16`s. Ok, that changes the arithmetic a little:
+So rather than dealing with bytes we need to deal with 16-bit integers. Ok, that changes the arithmetic a little:
 
 ```rust
 // We can fit 3 u16s in the prefix.
@@ -550,11 +550,11 @@ const fn suffix_len<T>() -> usize {
 }
 ```
 
-We can fit up to 7 flags inline. That's really awesome: it'll cover up to the 96th percentile of real-world flagsets and should save us many many really tiny allocations.
+We can fit up to 7 flags inline. That's really awesome: it'll cover up to 96% of real-world flagsets and should save us many many really tiny allocations.
 
 ## Pitfalls and `MaybeUninit<T>`
 
-We're talking in terms of `u16` above but our type is actually a `NonZeroU16`. They have the same size and layout but `NonZeroU16` can't be `0u16`. The challenge is the `NonZero` nature: the zeroed bit pattern is not a valid representation, and `Default for NonZeroU16` is not a thing. Places where we wrote `[0; N]` above have to be rewritten anyways since we're changing the type, but we can't just say:
+We're talking in terms of `u16` above but our type is actually a `NonZeroU16`. They have the same size and layout but `NonZeroU16` can't be `0u16`. The challenge is the `NonZero` nature: the zeroed bit pattern is not a valid representation, and `Default for NonZeroU16` is not a thing. Places where we wrote `[0u8; N]` above have to be rewritten anyways since we're changing the type, but we can't just say:
 
 ```rust
 // 💣 UNDEFINED BEHAVIOR!!
