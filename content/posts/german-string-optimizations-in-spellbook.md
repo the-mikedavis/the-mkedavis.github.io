@@ -492,15 +492,7 @@ Writes:    2,239,256 bytes
 
 We've saved around 300kb of total runtime memory (12%) with the change, plus we're using fewer blocks of memory and reading from and writing to the heap less. Success!
 
-We can go further though and save around 500kb of memory (16%) if we apply this "German string" optimization to another oft-instantiated type in the lookup table: the `FlagSet`.
-
-```
-Total:     2,584,850 bytes in 44,741 blocks
-At t-gmax: 2,190,833 bytes in 947 blocks
-At t-end:  0 bytes in 0 blocks
-Reads:     1,733,361 bytes
-Writes:    2,109,560 bytes
-```
+We can go further though if we apply this "German string" optimization to another oft-instantiated type in the lookup table: the `FlagSet`.
 
 # Bonus points: the FlagSet can also be German!
 
@@ -672,6 +664,30 @@ impl Default for FlagSlice {
 The length is zero, the prefix is zeroes, the suffix is zeroes. The whole struct is zeroes! With this representation, `Option::<FlagSlice>::None` is exactly the same as `FlagSlice::default()`, causing your code to behave _weirdly_. Suddenly `Some(FlagSlice::default()).is_some()` is `false`! 🥴
 
 While this pitfall seems scary and hard to debug, [Miri](https://github.com/rust-lang/miri) has got your back. Write types without the `MaybeUninit<T>` wrapper and `cargo miri test` will helpfully point out that you're opening yourself up to undefined behavior.
+
+## FlagSlice Memory Savings
+
+Rerunning the same example from above, DHAT reports:
+
+```
+Total:     2,584,850 bytes in 44,741 blocks
+At t-gmax: 2,190,833 bytes in 947 blocks
+At t-end:  0 bytes in 0 blocks
+Reads:     1,733,361 bytes
+Writes:    2,109,560 bytes
+```
+
+So to compare:
+
+| Stem + FlagSet                | Total                             | At t-gmax                        | Reads (B) | Writes (B) |
+|-------------------------------|-----------------------------------|----------------------------------|-----------|------------|
+| `Box<str>` + `Box<[Flag]>`    | 3,086,190 bytes in 130,988 blocks | 2,717,005 bytes in 90,410 blocks | 3,923,475 | 2,610,900  |
+| `UmbraString` + `Box<[Flag]>` | 2,714,546 bytes in 82,475 blocks  | 2,343,567 bytes in 41,487 blocks | 2,332,587 | 2,239,256  |
+| `UmbraString` + `FlagSlice`   | 2,584,850 bytes in 44,741 blocks  | 2,190,833 bytes in 947 blocks    | 1,733,361 | 2,109,560  |
+
+These are some respectable savings! We've cut out about a half of a megabyte of total memory, used far fewer allocations (blocks) and write to the heap a fair amount less. Plus we read from the heap less than half as much as we did before the changes.
+
+Not every dictionary will see the same savings, though: some dictionaries use more flags and have longer stems. But as discussed above, every time we use a short variant of an Umbra slice we save memory over a `Box<str>` or `Box<[Flag]>`.
 
 # Wrapping up & Kudos
 
