@@ -530,7 +530,7 @@ Rather than an "Umbra string" we'll be constructing a more generic "Umbra slice"
 struct UmbraString(UmbraSlice<u8>);
 ```
 
-The new types comes with new challenges though. For... _reasons_... `Flag` is defined as:
+The new type comes with new challenges though. For... _reasons_... `Flag` is defined as:
 
 ```rust
 type Flag = core::num::NonZeroU16;
